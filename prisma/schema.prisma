@@ -1,23 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum Difficulty {
-  Beginner
-  Intermediate
-  Advanced
 }
 
 model Course {
@@ -26,13 +13,21 @@ model Course {
   description String
   difficulty  Difficulty?
   createdAt   DateTime     @default(now())
-  enrollments Enrollment[]
+  Enrollment  Enrollment[]
 }
 
 model Enrollment {
   id           String   @id @default(cuid())
   studentEmail String
-  coureId      String
+  courseId     String
   enrolledAt   DateTime @default(now())
-  course       Course   @relation(fields: [coureId], references: [id], onDelete: Cascade) // foreign key to Course
+  Course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentEmail, courseId])
+}
+
+enum Difficulty {
+  Beginner
+  Intermediate
+  Advanced
 }
