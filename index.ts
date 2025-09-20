@@ -1,15 +1,15 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import express from "express";
 import bodyParser from "body-parser";
 import methodOverride from "method-override";
-import redis from "redis";
+import { createClient } from "redis";
 import shortId from "shortid";
 
+import dotenv from "dotenv";
 import route from "./routes/index.route";
+import { swaggerDocs } from "./swagger/swagger";
 
 const app = express();
+dotenv.config();
 app.use(express.json());
 app.use(
   bodyParser.urlencoded({
@@ -21,13 +21,13 @@ app.use(methodOverride("_method"));
 route(app);
 
 const redisClients = [
-  redis.createClient({
+  createClient({
     url: `redis://${process.env.REDIS_HOST_1}:${process.env.REDIS_PORT_1}`,
   }),
-  redis.createClient({
+  createClient({
     url: `redis://${process.env.REDIS_HOST_2}:${process.env.REDIS_PORT_2}`,
   }),
-  redis.createClient({
+  createClient({
     url: `redis://${process.env.REDIS_HOST_3}:${process.env.REDIS_PORT_3}`,
   }),
 ];
@@ -36,6 +36,8 @@ function getRedisClient(key: string) {
   const hash = key.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return redisClients[hash % redisClients.length];
 }
+
+swaggerDocs(app, Number(process.env.PORT) || 3000);
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`URL Shortener service running on port ${process.env.PORT}`);

@@ -1,11 +1,35 @@
-import { Express } from "express";
+import { Router } from "express";
 import {
   enrollCourse,
   getStudentEnrollments,
 } from "../controllers/enrollment.controller";
 
-export default function enrollmentRoute(app: Express) {
-  app.post("/enrollments", enrollCourse);
+const router = Router();
 
-  app.get("/students/:email/enrollments", getStudentEnrollments);
-}
+/**
+ * @swagger
+ * /api/enrollments:
+ *   post:
+ *     summary: Enroll in a course
+ *     tags: [Enrollments]
+ *     responses:
+ *       201:
+ *         description: Enrollment successful
+ * /api/students/{email}/enrollments:
+ *   get:
+ *     summary: Get student enrollments
+ *     tags: [Enrollments]
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of enrollments
+ */
+router.post("/", enrollCourse);
+router.get("/students/:email/enrollments", getStudentEnrollments);
+
+export default router;
