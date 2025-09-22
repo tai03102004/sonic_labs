@@ -6,7 +6,7 @@ services:
     ports:
       - "8081:8080"
     environment:
-      - DATABASE_URL=postgresql://postgres:tai03102004@localhost:5432/sonic
+      - DATABASE_URL=postgresql://postgres:tai03102004@db:5432/sonic
     depends_on:
       - db
     volumes:

@@ -78,6 +78,23 @@ REDIS_HOST_3=localhost
 REDIS_PORT_3=6381
 ```
 
+### Docker Setup
+
+This project uses Docker to run Backend (Node + Prisma), Frontend (Next.js), and PostgreSQL in isolated containers.
+Accessing Services
+
+Backend: http://localhost:8080
+Swagger API docs: http://localhost:8080/api-docs
+Frontend: http://localhost:3000
+Database: PostgreSQL running on port 5432 inside Docker.
+
+```bash
+docker-compose up --build
+docker-compose logs -f
+docker-compose stop
+docker-compose down -v
+```
+
 ### Database Setup
 
 ```bash
@@ -159,31 +176,36 @@ curl -X POST http://localhost:3000/api/enrollments \
 
 ```
 exercise/
-├── 📂 controllers/           # Business logic layer
-│   ├── course.controller.ts
-│   └── enrollment.controller.ts
-│   └── login.controller.ts
-├── 📂 middlewares/          # Express middlewares
-│   └── validate.middleware.ts
-│   └── auth.middleware.ts
-├── 📂 routes/               # API route definitions
-│   ├── index.route.ts
-│   ├── course.route.ts
-│   └── enrollment.route.ts
-│   └── login.route.ts
-├── 📂 schemas/              # Validation schemas
-│   ├── course.schema.ts
-│   └── enrollment.schema.ts
-├── 📂 prisma/               # Database configuration
-│   ├── schema.prisma
-│   └── seed.ts
-├── 📂 utils/               # Builder Pagination, filters and search,...
-│   ├── queryBuilder.ts
-├── 📂 swagger/              # API documentation
-│   └── swagger.ts
-├── 📄 index.ts              # Application entry point
-├── 📄 .env                  # Environment variables
-└── 📄 tsconfig.json         # TypeScript configuration
+├─ backend/
+│  ├─ 📂 controllers/           # Business logic layer
+│     ├── course.controller.ts
+│     └── enrollment.controller.ts
+│     └── login.controller.ts
+│  ├─ 📂 middlewares/          # Express middlewares
+│     └── validate.middleware.ts
+│     └── auth.middleware.ts
+│  ├─📂 routes/               # API route definitions
+│     ├── index.route.ts
+│     ├── course.route.ts
+│     └── enrollment.route.ts
+│     └── login.route.ts
+│  ├─📂 schemas/              # Validation schemas
+│     ├── course.schema.ts
+│     └── enrollment.schema.ts
+│  ├─📂 prisma/               # Database configuration
+│     ├── schema.prisma
+│     └── seed.ts
+│  ├─ 📂 utils/               # Builder Pagination, filters and search,...
+│     ├── queryBuilder.ts
+│  ├─ 📂 swagger/              # API documentation
+│     └── swagger.ts
+│  ├─ 📄 index.ts              # Application entry point
+│  ├─  📄 .env                  # Environment variables
+│  ├─ 📄 tsconfig.json         # TypeScript configuration
+│  ├─ Dockerfile
+├─ frontend/
+│  ├─ Dockerfile
+└── 📄 docker-compose.yml
 ```
 
 ---
