@@ -9,32 +9,32 @@ const prisma = new PrismaClient();
  * Return an array of course records.
  */
 export async function listAllCourse(req: Request, res: Response) {
-  try {
-    const query = buildPrismaQuery({
-      ...req.query,
-      filters: {
-        ...(req.query.difficulty && { difficulty: req.query.difficulty }),
-        ...(req.query.title && {
-          title: { contains: req.query.title as string, mode: "insensitive" },
-        }),
-      },
-    });
-    const totalItems = await prisma.course.count({ where: query.where });
-    const { pagination, ...queryWithoutPagination } = query;
-    const courses = await prisma.course.findMany(queryWithoutPagination);
+  // try {
+  const query = buildPrismaQuery({
+    ...req.query,
+    filters: {
+      ...(req.query.difficulty && { difficulty: req.query.difficulty }),
+      ...(req.query.title && {
+        title: { contains: req.query.title as string, mode: "insensitive" },
+      }),
+    },
+  });
+  const totalItems = await prisma.course.count({ where: query.where });
+  const { pagination, ...queryWithoutPagination } = query;
+  const courses = await prisma.course.findMany(queryWithoutPagination);
 
-    res.json({
-      data: courses,
-      meta: {
-        totalItems,
-        totalPages: Math.ceil(totalItems / query.pagination.pageSize),
-        currentPage: query.pagination.pageNum,
-        pageSize: query.pagination.pageSize,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Internal server error" });
-  }
+  res.json({
+    data: courses,
+    meta: {
+      totalItems,
+      totalPages: Math.ceil(totalItems / query.pagination.pageSize),
+      currentPage: query.pagination.pageNum,
+      pageSize: query.pagination.pageSize,
+    },
+  });
+  // } catch (err) {
+  //   res.status(500).json({ error: "Internal server error" });
+  // }
 }
 
 /**
