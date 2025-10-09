@@ -1,6 +1,6 @@
+import Layout from '@/components/Layout';
+import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import Layout from '../components/Layout';
 
 interface Course {
   id: string;
@@ -26,40 +26,50 @@ interface EnrollmentsResponse {
   enrollments: Enrollment[];
 }
 
+const API_BASE_URL = 'http://localhost:8080/api';
+
 export default function Enrollments() {
-  const router = useRouter();
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [totalEnrollments, setTotalEnrollments] = useState(0);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const email = localStorage.getItem('userEmail');
-    
-    if (!token || !email) {
-      router.push('/login');
-      return;
-    }
-    
-    setUserEmail(email);
-    fetchEnrollments(email);
-  }, [router]);
+    fetchUserAndEnrollments();
+  }, []);
 
-  const fetchEnrollments = async (email: string) => {
+  const fetchUserAndEnrollments = async () => {
     setLoading(true);
+    setError('');
+    
     try {
-      const response = await fetch(`/api/enrollments/students?email=${encodeURIComponent(email)}`);
-      const data: EnrollmentsResponse = await response.json();
+      const token = localStorage?.getItem('token');
+      const email = localStorage?.getItem('email');
       
-      if (response.ok) {
-        setEnrollments(data.enrollments);
-        setTotalEnrollments(data.totalEnrollments);
-      } else {
-        console.error('Failed to fetch enrollments');
+      if (!token || !email) {
+        setError('Please login to view your enrollments');
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Failed to fetch enrollments:', error);
+      console.log(email);
+      // Then fetch enrollments
+      const enrollmentsResponse = await fetch(
+        `${API_BASE_URL}/enrollments/students?email=${encodeURIComponent(email)}`
+      );
+
+      if (!enrollmentsResponse.ok) {
+        throw new Error('Failed to fetch enrollments');
+      }
+
+      const data: EnrollmentsResponse = await enrollmentsResponse.json();
+      console.log("DATA", data);
+      setEnrollments(data.enrollments);
+      setTotalEnrollments(data.totalEnrollments);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching enrollments:', err);
     } finally {
       setLoading(false);
     }
@@ -67,10 +77,23 @@ export default function Enrollments() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Beginner': return 'bg-green-100 text-green-800';
-      case 'Intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'Advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Beginner': 
+        return 'bg-green-100 text-green-800 px-3 py-1 text-sm font-medium rounded-full';
+      case 'Intermediate': 
+        return 'bg-yellow-100 text-yellow-800 px-3 py-1 text-sm font-medium rounded-full';
+      case 'Advanced': 
+        return 'bg-red-100 text-red-800 px-3 py-1 text-sm font-medium rounded-full';
+      default: 
+        return 'bg-gray-100 text-gray-800 px-3 py-1 text-sm font-medium rounded-full';
+    }
+  };
+
+  const getDifficultyIcon = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return '🌱';
+      case 'Intermediate': return '🌿';
+      case 'Advanced': return '🌳';
+      default: return '📖';
     }
   };
 
@@ -84,89 +107,133 @@ export default function Enrollments() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="text-center py-12">
-          <div className="text-gray-500">Loading your enrollments...</div>
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center py-16">
+            <div className="text-lg text-gray-600">Loading your enrollments...</div>
+          </div>
         </div>
-      </Layout>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="text-red-600 text-lg font-medium mb-2">Error</div>
+            <div className="text-red-700">{error}</div>
+            <button 
+              onClick={fetchUserAndEnrollments}
+              className="mt-4 bg-red-600 text-white px-6 py-2 rounded-lg font-medium"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Enrollments</h1>
-            <p className="mt-2 text-gray-600">
-              You are enrolled in {totalEnrollments} course{totalEnrollments !== 1 ? 's' : ''}
-            </p>
-          </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">My Learning Journey</h1>
+          <p className="text-gray-600 text-lg">
+            {userEmail && (
+              <>
+                Welcome <span className="font-semibold text-blue-600">{userEmail}</span>! 
+                You are enrolled in <span className="font-semibold text-blue-600">{totalEnrollments}</span> course{totalEnrollments !== 1 ? 's' : ''}
+              </>
+            )}
+          </p>
         </div>
 
         {/* Statistics Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{totalEnrollments}</div>
-              <div className="text-sm text-gray-600">Total Courses</div>
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Learning Statistics</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-3xl font-bold text-blue-600 mb-2">{totalEnrollments}</div>
+              <div className="text-sm text-blue-700 font-medium">Total Courses</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-3xl font-bold text-green-600 mb-2">
                 {enrollments.filter(e => e.Course.difficulty === 'Beginner').length}
               </div>
-              <div className="text-sm text-gray-600">Beginner Level</div>
+              <div className="text-sm text-green-700 font-medium">🌱 Beginner Level</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
+            <div className="text-center p-4 bg-red-50 rounded-lg">
+              <div className="text-3xl font-bold text-red-600 mb-2">
                 {enrollments.filter(e => e.Course.difficulty === 'Advanced').length}
               </div>
-              <div className="text-sm text-gray-600">Advanced Level</div>
+              <div className="text-sm text-red-700 font-medium">🌳 Advanced Level</div>
             </div>
           </div>
         </div>
 
+        {/* Enrollments List */}
         {enrollments.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500 mb-4">You have not enrolled in any courses yet.</div>
-            <button
-              onClick={() => router.push('/courses')}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
+          <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="text-6xl mb-6">📚</div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Start Your Learning Journey!</h3>
+            <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto">
+              You haven't enrolled in any courses yet. Discover amazing courses and start learning today.
+            </p>
+            <button className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium text-lg">
               Browse Courses
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {enrollments.map((enrollment) => (
               <div key={enrollment.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                          {enrollment.Course.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {enrollment.Course.description}
-                        </p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span>Code: <span className="font-medium">{enrollment.Course.code}</span></span>
-                          <span>Enrolled: {formatDate(enrollment.enrolledAt)}</span>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{getDifficultyIcon(enrollment.Course.difficulty)}</span>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900 mb-1">
+                            {enrollment.Course.title}
+                          </h3>
+                          <span className={getDifficultyColor(enrollment.Course.difficulty)}>
+                            {enrollment.Course.difficulty}
+                          </span>
                         </div>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(enrollment.Course.difficulty)}`}>
-                        {enrollment.Course.difficulty}
-                      </span>
+                    </div>
+                    
+                    <p className="text-gray-600 mb-4 leading-relaxed">
+                      {enrollment.Course.description}
+                    </p>
+                    
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <span className="mr-2">🏷️</span>
+                        <span className="font-medium">{enrollment.Course.code}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="mr-2">📅</span>
+                        <span>Enrolled: {formatDate(enrollment.enrolledAt)}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="mr-2">👤</span>
+                        <span>Student: {enrollment.studentEmail}</span>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                    <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      View Course
+                  <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3">
+                    <button className="px-6 py-3 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg">
+                      📖 View Course
                     </button>
-                    <button className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                      Certificate
+                    <button className="px-6 py-3 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg">
+                      🏆 Certificate
                     </button>
                   </div>
                 </div>
@@ -176,24 +243,26 @@ export default function Enrollments() {
         )}
 
         {/* Quick Actions */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-            <button
-              onClick={() => router.push('/courses')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-6 bg-gradient-to-r from-gray-50 to-blue-50">
+          <h3 className="text-lg font-bold text-gray-900 mb-6">Quick Actions</h3>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/courses">
+              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
+                🔍 Browse More Courses
+              </button>
+            </Link>
+
+            <button 
+              onClick={fetchUserAndEnrollments}
+              className="bg-gray-600 text-white px-6 py-3 rounded-lg font-medium"
             >
-              Browse More Courses
-            </button>
-            <button
-              onClick={() => fetchEnrollments(userEmail)}
-              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-            >
-              Refresh List
+              🔄 Refresh List
             </button>
           </div>
         </div>
       </div>
+    </div>
     </Layout>
+
   );
 }

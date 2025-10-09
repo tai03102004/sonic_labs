@@ -3,7 +3,7 @@ import {
   enrollCourse,
   getStudentEnrollments,
 } from "../controllers/enrollment.controller";
-import { authenticateToken } from "../middlewares/auth.middleware";
+import { authentication } from "services/apiKey.service";
 
 const router = Router();
 
@@ -38,6 +38,7 @@ const router = Router();
  *     tags: [Enrollments]
  *     security:
  *       - bearerAuth: []
+ *       - clientIdAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -45,12 +46,8 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
- *               - studentEmail
  *               - courseId
  *             properties:
- *               studentEmail:
- *                 type: string
- *                 example: "abc@gmail.com"
  *               courseId:
  *                 type: string
  *                 example: "1"
@@ -74,8 +71,7 @@ const router = Router();
  *       200:
  *         description: List of enrollments
  */
-
-router.post("/", authenticateToken, enrollCourse);
+router.post("/", authentication, enrollCourse);
 router.get("/students", getStudentEnrollments);
 
 export default router;

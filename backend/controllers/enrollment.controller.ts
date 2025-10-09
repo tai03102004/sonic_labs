@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
+const HEADER = {
+  API_KEY: "x-api-key",
+  CLIENT_ID: "x-client-id",
+  AUTHORIZATION: "authorization",
+};
 /**
  * Enroll a student in a course.
  *
@@ -10,18 +15,34 @@ const prisma = new PrismaClient();
  */
 export async function enrollCourse(req: Request, res: Response) {
   try {
-    const { studentEmail, courseId } = req.body;
+    const { courseId } = req.body;
+    const userIdHeader = req.headers[HEADER.CLIENT_ID];
+    const userId = Array.isArray(userIdHeader) ? userIdHeader[0] : userIdHeader;
+    if (!userId) {
+      return res.status(400).json({ error: "Missing client ID in headers" });
+    }
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    const studentEmail = user?.email;
+    if (!studentEmail) {
+      return res.status(404).json({ error: "User not found" });
+    }
     const course = await prisma.course.findUnique({
       where: { id: courseId },
     });
     if (!course) {
       return res.status(404).json({ error: "Course not found" });
     }
-    console.log("Course", course);
     const existingEnrollment = await prisma.enrollment.findUnique({
-      where: { studentEmail_courseId: { studentEmail, courseId: course.id } },
+      where: {
+        studentEmail_courseId: {
+          studentEmail: studentEmail,
+          courseId: course.id,
+        },
+      },
     });
-    console.log("Existing Enrollment", existingEnrollment);
+
     if (existingEnrollment) {
       return res
         .status(409)
@@ -29,7 +50,7 @@ export async function enrollCourse(req: Request, res: Response) {
     }
     const enrollment = await prisma.enrollment.create({
       data: {
-        studentEmail,
+        studentEmail: studentEmail,
         courseId: course.id,
       },
       include: {

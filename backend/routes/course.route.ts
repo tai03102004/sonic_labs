@@ -2,7 +2,7 @@ import { Router } from "express";
 import { listAllCourse, createCourse } from "../controllers/course.controller";
 import { validate } from "../middlewares/validate.middleware";
 import { courseSchema } from "../schemas/course.schema";
-import { authenticateToken } from "../middlewares/auth.middleware";
+import { authentication } from "services/apiKey.service";
 
 const router = Router();
 
@@ -84,6 +84,7 @@ const router = Router();
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
+ *       - clientIdAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -149,6 +150,6 @@ const router = Router();
  */
 
 router.get("/", listAllCourse);
-router.post("/", authenticateToken, validate(courseSchema), createCourse);
+router.post("/", authentication, validate(courseSchema), createCourse);
 
 export default router;

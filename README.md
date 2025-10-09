@@ -10,7 +10,7 @@
 
 ## ✨ Features
 
-- 🔐 **JWT Authentication** to protect sensitive endpoints
+- 🔐 **JWT Authentication (RSA)** to protect sensitive endpoints
 - 🗄️ **Database ORM** with Prisma and PostgreSQL
 - ⚡ **Redis caching** for improved performance
 - 📚 **Interactive API docs** with Swagger UI
@@ -124,14 +124,30 @@ npm run dev
 
 ### Endpoints Overview
 
-| Method | Endpoint                           | Description              |
-| ------ | ---------------------------------- | ------------------------ |
-| `GET`  | `/api/courses`                     | List all courses         |
-| `POST` | `/api/courses`                     | Create a new course      |
-| `POST` | `/api/enrollments`                 | Enroll student in course |
-| `GET`  | `/api/students/:email/enrollments` | Get student enrollments  |
+| Method | Endpoint                           | Description                                                   |
+| ------ | ---------------------------------- | ------------------------------------------------------------- |
+| `POST` | `/api/auth/signup`                 | Register a new user                                           |
+| `POST` | `/api/auth/login`                  | Log in and get tokens                                         |
+| `POST` | `/api/auth/logout`                 | Log out current user (requires Authorization + x-client-id)   |
+| `POST` | `/api/auth/refresh-token`          | Refresh access & refresh tokens                               |
+| `GET`  | `/api/courses`                     | List all courses                                              |
+| `POST` | `/api/courses`                     | Create a new course(requires Authorization + x-client-id)     |
+| `POST` | `/api/enrollments`                 | Enroll student in course                                      |
+| `GET`  | `/api/students/:email/enrollments` | Get student enrollments(requires Authorization + x-client-id) |
 
 ### Example Requests
+
+### Signup
+
+```bash
+curl -X POST http://localhost:3000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newuser@example.com",
+    "password": "securepassword123",
+    "name": "John Doe"
+  }'
+```
 
 ### Login
 
@@ -144,12 +160,28 @@ curl -X POST http://localhost:3000/api/auth/login \
   }'
 ```
 
+### Logout
+
+```bash
+curl -X POST http://localhost:3000/api/auth/logout \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "x-client-id: <USER_ID>"
+```
+
+### Refresh Token
+
+```bash
+curl -X POST http://localhost:3000/api/auth/refresh-token \
+  -H "Content-Type: application/json" \
+```
+
 #### Create a Course
 
 ```bash
 curl -X POST http://localhost:3000/api/courses \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN", "CLIENT_ID: UserId" \
   -d '{
     "title": "Advanced TypeScript",
     "description": "Deep dive into TypeScript",
@@ -163,7 +195,7 @@ curl -X POST http://localhost:3000/api/courses \
 ```bash
 curl -X POST http://localhost:3000/api/enrollments \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN", "CLIENT_ID: UserId", \
   -d '{
     "studentEmail": "student@example.com",
     "courseCode": "NODE101"

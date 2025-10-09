@@ -10,6 +10,21 @@ const options = {
       version: "1.0.0",
       description: "API documentation with Swagger",
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+        clientIdAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "x-client-id",
+          description: "Client ID of the user",
+        },
+      },
+    },
     servers: [
       {
         url: "http://localhost:8080",
